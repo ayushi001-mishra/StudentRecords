@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StudentRecords.Models;
 
@@ -74,6 +75,40 @@ namespace StudentRecords.Controllers
 
             return Ok();
         }
+
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchStudent(int id, [FromBody] JsonPatchDocument<Student> patchDoc)
+        {
+            if (patchDoc == null)
+            {
+                return BadRequest();
+            }
+
+            var student = await _studentContext.Students.FindAsync(id);
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            patchDoc.ApplyTo(student, ModelState);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _studentContext.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw;
+            }
+
+            return Ok(student);
+        }
+
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStudent(int id)
