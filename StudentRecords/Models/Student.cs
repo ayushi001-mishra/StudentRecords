@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-
-namespace StudentRecords.Models
+﻿namespace StudentRecords.Models
 {
     public class Student
     {

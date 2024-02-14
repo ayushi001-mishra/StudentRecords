@@ -11,5 +11,7 @@ namespace StudentRecords.Models
         }
 
         public DbSet<Student> Students { get; set; } = null!;
+        public DbSet<State> States { get; set; }
+        public DbSet<City> Cities { get; set; }
     }
 }
