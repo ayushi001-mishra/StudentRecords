@@ -61,7 +61,6 @@ namespace StudentRecords.Controllers
             {
                 return BadRequest();
             }
-
             _studentContext.Entry(student).State = EntityState.Modified;
 
             try
