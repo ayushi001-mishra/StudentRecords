@@ -9,6 +9,7 @@ namespace StudentRecords.Models
         public int CId { get; set; }
         [ForeignKey("State")]
         public int StateId { get; set; }
+        public State State { get; set; }
         public string Name { get; set; }
         public int CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }

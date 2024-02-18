@@ -1,8 +1,7 @@
-﻿namespace StudentRecords.Models
+﻿namespace StudentRecords.DTOs
 {
-    public class Student
+    public class StudentInputDto
     {
-        public int Id { get; set; }
         public string Code { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
@@ -19,8 +18,5 @@
         public int ModifiedBy { get; set; }
         public DateTime ModifiedOn { get; set; }
 
-        public State State { get; set; }
-        public City City { get; set; }
     }
-
 }
