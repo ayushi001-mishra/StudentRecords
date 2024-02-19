@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StudentRecords.DTOs;
 using StudentRecords.Models;
+using System.Reflection;
 
 namespace StudentRecords.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
     public class StudentController : ControllerBase
     {
@@ -17,6 +17,7 @@ namespace StudentRecords.Controllers
             _studentContext = studentContext;
         }
 
+        [Route("api/Student")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<StudentDto>>> GetStudents()
         {
@@ -51,7 +52,8 @@ namespace StudentRecords.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
+        [Route("api/Student/{id}")]
+        [HttpGet]
         public async Task<ActionResult<Student>> GetStudent(int id)
         {
             if (_studentContext.Students == null)
@@ -68,6 +70,7 @@ namespace StudentRecords.Controllers
             return student;
         }
 
+        [Route("api/Student")]
         [HttpPost]
         public async Task<IActionResult> PostStudent([FromBody] StudentInputDto studentInput)
         {
@@ -108,8 +111,8 @@ namespace StudentRecords.Controllers
             return BadRequest(ModelState);
         }
 
-
-        [HttpPut("{id}")]
+        [Route("api/Student/{id}")]
+        [HttpPut]
         public async Task<IActionResult> PutStudent(int id, StudentInputDto studentInput)
         {
             var existingStudent = await _studentContext.Students.FindAsync(id);
@@ -148,7 +151,8 @@ namespace StudentRecords.Controllers
             return Ok();
         }
 
-        [HttpPatch("{id}")]
+        [Route("api/Student/{id}")]
+        [HttpPatch]
         public async Task<IActionResult> PatchStudent(int id, [FromBody] JsonPatchDocument<Student> patchDoc)
         {
             if (patchDoc == null)
@@ -181,8 +185,8 @@ namespace StudentRecords.Controllers
             return Ok(student);
         }
 
-
-        [HttpDelete("{id}")]
+        [Route("api/Student/{id}")]
+        [HttpDelete]
         public async Task<IActionResult> DeleteStudent(int id)
         {
             if (_studentContext.Students == null)
@@ -201,6 +205,23 @@ namespace StudentRecords.Controllers
 
             return Ok();
         }
+
+        [Route("api/Student/CheckEmail/{email}")]
+        [HttpGet]
+        public IActionResult CheckEmailExists(string email)
+        {
+            var exists = _studentContext.Students.Any(u => u.Email == email);
+            return Ok(new { Exists = exists });
+        }
+
+        [Route("api/Student/CheckMobile/{mobile}")]
+        [HttpGet]
+        public IActionResult CheckMobileExists(string mobile)
+        {
+            var exists = _studentContext.Students.Any(u => u.Mobile == mobile);
+            return Ok(new { Exists = exists });
+        }
+
     }
 }
 
