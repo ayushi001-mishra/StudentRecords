@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.JsonPatch;
+﻿using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StudentRecords.DTOs;
 using StudentRecords.Models;
-using System.Reflection;
 
 namespace StudentRecords.Controllers
 {
@@ -19,6 +17,15 @@ namespace StudentRecords.Controllers
 
         [Route("api/Student")]
         [HttpGet]
+        /*public async Task<IActionResult> GetStudents()
+        {
+            string sql = "SELECT s.Id, s.Code, s.Name, s.Email, s.Mobile, s.Address1, s.Address2, s.IsActive, s.Gender, s.MaritalStatus, s.CityId, s.CreatedBy, s.CreatedOn, s.ModifiedBy, s.ModifiedOn, s.StateId, st.Name AS StateName, c.Name AS CityName " +
+                         "FROM Students s " +
+                         "LEFT OUTER JOIN States st ON s.StateId = st.SId " +
+                         "LEFT OUTER JOIN Cities c ON s.CityId = c.CId";
+            var result = await _studentContext.Student.FromSqlRaw(sql).ToListAsync();
+            return Ok(result);
+        }*/
         public async Task<ActionResult<IEnumerable<StudentDto>>> GetStudents()
         {
             string sql = "SELECT s.Id, s.Code, s.Name, s.Email, s.Mobile, s.Address1, s.Address2, s.IsActive, s.Gender, s.MaritalStatus, s.CityId, s.CreatedBy, s.CreatedOn, s.ModifiedBy, s.ModifiedOn, s.StateId, st.Name AS StateName, c.Name AS CityName " +
@@ -221,7 +228,6 @@ namespace StudentRecords.Controllers
             var exists = _studentContext.Students.Any(u => u.Mobile == mobile);
             return Ok(new { Exists = exists });
         }
-
     }
 }
 

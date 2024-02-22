@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StudentRecords.Models;
 
 namespace StudentRecords.Models
 {
@@ -13,6 +12,8 @@ namespace StudentRecords.Models
         public DbSet<Student> Students { get; set; } = null!;
         public DbSet<State> States { get; set; }
         public DbSet<City> Cities { get; set; }
+
+        /*public DbSet<StudentD> Student { get; set; }*/
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,5 +31,6 @@ namespace StudentRecords.Models
 
             base.OnModelCreating(modelBuilder);
         }
+
     }
 }
