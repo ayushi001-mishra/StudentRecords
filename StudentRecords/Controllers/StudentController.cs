@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StudentRecords.DTOs;
 using StudentRecords.Models;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace StudentRecords.Controllers
 {
@@ -58,6 +59,51 @@ namespace StudentRecords.Controllers
          .ToListAsync();
             return Ok(result);
         }
+
+        [Route("api/Student/Paginated")]
+        [HttpGet]
+        public async Task<ActionResult<PaginatedResult<StudentDto>>> GetStudents(int pageNumber=1, int pageSize=5)
+        {
+
+            int totalActiveStudents = await _studentContext.Students.CountAsync(s => s.IsActive == 1);
+            int totalPage = (int)Math.Ceiling((double)totalActiveStudents / pageSize);
+
+            string sql = "SELECT s.Id, s.Code, s.Name, s.Email, s.Mobile, s.Address1, s.Address2, s.IsActive, s.Gender, s.MaritalStatus, s.CityId, s.CreatedBy, s.CreatedOn, s.ModifiedBy, s.ModifiedOn, s.StateId, st.Name AS StateName, c.Name AS CityName " +
+                        "FROM Students s " +
+                        "LEFT OUTER JOIN States st ON s.StateId = st.SId " +
+                        "LEFT OUTER JOIN Cities c ON s.CityId = c.CId";
+
+            var result = await _studentContext.Students.FromSqlRaw(sql)
+                .Where(s => s.IsActive == 1)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(s => new StudentDto
+                {
+                    Id = s.Id,
+                    Code = s.Code,
+                    Name = s.Name,
+                    Email = s.Email,
+                    Mobile = s.Mobile,
+                    Address1 = s.Address1,
+                    Address2 = s.Address2,
+                    IsActive = s.IsActive,
+                    Gender = s.Gender,
+                    MaritalStatus = s.MaritalStatus,
+                    CityId = s.CityId,
+                    CreatedBy = s.CreatedBy,
+                    CreatedOn = s.CreatedOn,
+                    ModifiedBy = s.ModifiedBy,
+                    ModifiedOn = s.ModifiedOn,
+                    StateId = s.StateId,
+                    StateName = s.State.Name,
+                    CityName = s.City.Name
+                })
+                .ToListAsync();
+
+            /*return Ok(result);*/
+            return Ok(new PaginatedResult<StudentDto>(result, totalPage));
+        }
+
 
         [Route("api/Student/{id}")]
         [HttpGet]
