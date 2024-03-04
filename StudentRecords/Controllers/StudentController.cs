@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using StudentRecords.DTOs;
 using StudentRecords.Models;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Data;
 
 namespace StudentRecords.Controllers
 {
@@ -18,15 +19,6 @@ namespace StudentRecords.Controllers
 
         [Route("api/Student")]
         [HttpGet]
-        /*public async Task<IActionResult> GetStudents()
-        {
-            string sql = "SELECT s.Id, s.Code, s.Name, s.Email, s.Mobile, s.Address1, s.Address2, s.IsActive, s.Gender, s.MaritalStatus, s.CityId, s.CreatedBy, s.CreatedOn, s.ModifiedBy, s.ModifiedOn, s.StateId, st.Name AS StateName, c.Name AS CityName " +
-                         "FROM Students s " +
-                         "LEFT OUTER JOIN States st ON s.StateId = st.SId " +
-                         "LEFT OUTER JOIN Cities c ON s.CityId = c.CId";
-            var result = await _studentContext.Student.FromSqlRaw(sql).ToListAsync();
-            return Ok(result);
-        }*/
         public async Task<ActionResult<IEnumerable<StudentDto>>> GetStudents()
         {
             string sql = "SELECT s.Id, s.Code, s.Name, s.Email, s.Mobile, s.Address1, s.Address2, s.IsActive, s.Gender, s.MaritalStatus, s.CityId, s.CreatedBy, s.CreatedOn, s.ModifiedBy, s.ModifiedOn, s.StateId, st.Name AS StateName, c.Name AS CityName " +
@@ -59,11 +51,14 @@ namespace StudentRecords.Controllers
          .ToListAsync();
             return Ok(result);
         }
+        
 
         [Route("api/Student/Paginated")]
-        [HttpGet]
-        public async Task<ActionResult<PaginatedResult<StudentDto>>> GetStudents(int pageNumber=1, int pageSize=5)
+        [HttpPost]
+        public async Task<ActionResult<PaginatedResult<StudentDto>>> GetStudentsPost([FromBody] PaginationParameters paginationParameters)
         {
+            int pageNumber = paginationParameters.PageNumber;
+            int pageSize = paginationParameters.PageSize;
 
             int totalActiveStudents = await _studentContext.Students.CountAsync(s => s.IsActive == 1);
             int totalPage = (int)Math.Ceiling((double)totalActiveStudents / pageSize);
@@ -101,6 +96,135 @@ namespace StudentRecords.Controllers
                 .ToListAsync();
 
             /*return Ok(result);*/
+            return Ok(new PaginatedResult<StudentDto>(result, totalPage));
+        }
+
+        [Route("api/Student/PaginatedSort")]
+        [HttpPost]
+        public async Task<ActionResult<PaginatedResult<StudentDto>>> GetStudentsPaginatedAndSorted([FromBody] PaginationSortParameters parameters)
+        {
+            int pageNumber = parameters.PageNumber;
+            int pageSize = parameters.PageSize;
+            string sortAttribute = parameters.SortAttribute.ToLower();
+            bool isAscending = parameters.SortOrder == "asc";
+            string searchName = parameters.SearchName;
+
+            int totalActiveStudents = await _studentContext.Students.CountAsync(s => s.IsActive == 1);
+            int totalPage = (int)Math.Ceiling((double)totalActiveStudents / pageSize);
+
+            string sql = "";
+            IQueryable<StudentDto> query;
+
+            if (!string.IsNullOrEmpty(searchName))
+            {
+                sql = $"SELECT s.Id, s.Code, s.Name, s.Email, s.Mobile, s.Address1, s.Address2, s.IsActive, s.Gender, s.MaritalStatus, s.CityId, s.CreatedBy, s.CreatedOn, s.ModifiedBy, s.ModifiedOn, s.StateId, st.Name AS StateName, c.Name AS CityName " +
+                      $"FROM Students s " +
+                      $"LEFT OUTER JOIN States st ON s.StateId = st.SId " +
+                      $"LEFT OUTER JOIN Cities c ON s.CityId = c.CId " +
+                      $"WHERE s.Name = @searchName";
+
+                SqlParameter parameter = new SqlParameter("@searchName", SqlDbType.NVarChar)
+                {
+                    Value = searchName
+                };
+
+                 query = _studentContext.Students.FromSqlRaw(sql, parameter)
+                                                            .Where(s => s.IsActive == 1)
+                                                            .Select(s => new StudentDto
+                                                            {
+                                                                Id = s.Id,
+                                                                Code = s.Code,
+                                                                Name = s.Name,
+                                                                Email = s.Email,
+                                                                Mobile = s.Mobile,
+                                                                Address1 = s.Address1,
+                                                                Address2 = s.Address2,
+                                                                IsActive = s.IsActive,
+                                                                Gender = s.Gender,
+                                                                MaritalStatus = s.MaritalStatus,
+                                                                CityId = s.CityId,
+                                                                CreatedBy = s.CreatedBy,
+                                                                CreatedOn = s.CreatedOn,
+                                                                ModifiedBy = s.ModifiedBy,
+                                                                ModifiedOn = s.ModifiedOn,
+                                                                StateId = s.StateId,
+                                                                StateName = s.State.Name,
+                                                                CityName = s.City.Name
+                                                            });
+            }
+            else
+            {
+                sql = "SELECT s.Id, s.Code, s.Name, s.Email, s.Mobile, s.Address1, s.Address2, s.IsActive, s.Gender, s.MaritalStatus, s.CityId, s.CreatedBy, s.CreatedOn, s.ModifiedBy, s.ModifiedOn, s.StateId, st.Name AS StateName, c.Name AS CityName " +
+                           "FROM Students s " +
+                           "LEFT OUTER JOIN States st ON s.StateId = st.SId " +
+                           "LEFT OUTER JOIN Cities c ON s.CityId = c.CId";
+
+                query = _studentContext.Students.FromSqlRaw(sql)
+                                                            .Where(s => s.IsActive == 1)
+                                                            .Select(s => new StudentDto
+                                                            {
+                                                                Id = s.Id,
+                                                                Code = s.Code,
+                                                                Name = s.Name,
+                                                                Email = s.Email,
+                                                                Mobile = s.Mobile,
+                                                                Address1 = s.Address1,
+                                                                Address2 = s.Address2,
+                                                                IsActive = s.IsActive,
+                                                                Gender = s.Gender,
+                                                                MaritalStatus = s.MaritalStatus,
+                                                                CityId = s.CityId,
+                                                                CreatedBy = s.CreatedBy,
+                                                                CreatedOn = s.CreatedOn,
+                                                                ModifiedBy = s.ModifiedBy,
+                                                                ModifiedOn = s.ModifiedOn,
+                                                                StateId = s.StateId,
+                                                                StateName = s.State.Name,
+                                                                CityName = s.City.Name
+                                                            });
+            }
+
+            switch (sortAttribute)
+            {
+                case "name":
+                    query = isAscending ? query.OrderBy(s => s.Name) : query.OrderByDescending(s => s.Name);
+                    break;
+                case "code":
+                    query = isAscending ? query.OrderBy(s => s.Code) : query.OrderByDescending(s => s.Code);
+                    break;
+                case "email":
+                    query = isAscending ? query.OrderBy(s => s.Email) : query.OrderByDescending(s => s.Email);
+                    break;
+                case "mobile":
+                    query = isAscending ? query.OrderBy(s => s.Mobile) : query.OrderByDescending(s => s.Mobile);
+                    break;
+                case "address1":
+                    query = isAscending ? query.OrderBy(s => s.Address1) : query.OrderByDescending(s => s.Address1);
+                    break;
+                case "address2":
+                    query = isAscending ? query.OrderBy(s => s.Address2) : query.OrderByDescending(s => s.Address2);
+                    break;
+                case "gender":
+                    query = isAscending ? query.OrderBy(s => s.Gender) : query.OrderByDescending(s => s.Gender);
+                    break;
+                case "maritalstatus":
+                    query = isAscending ? query.OrderBy(s => s.MaritalStatus) : query.OrderByDescending(s => s.MaritalStatus);
+                    break;
+                case "statename":
+                    query = isAscending ? query.OrderBy(s => s.StateName) : query.OrderByDescending(s => s.StateName);
+                    break;
+                case "cityname":
+                    query = isAscending ? query.OrderBy(s => s.CityName) : query.OrderByDescending(s => s.CityName);
+                    break;
+                default:
+                    query = query.OrderBy(s => s.Id); 
+                    break;
+            }
+
+            var result = await query.Skip((pageNumber - 1) * pageSize)
+                                   .Take(pageSize)
+                                   .ToListAsync();
+
             return Ok(new PaginatedResult<StudentDto>(result, totalPage));
         }
 
